@@ -1,31 +1,25 @@
 plugins {
     java
-    id("xyz.jpenilla.run-paper") version "2.3.1"
-    id("io.canvasmc.weaver.userdev") version "2.3.12"
+    idea
 }
 
-group = "io.canvasmc.itemmodifer"
-version = "1.0.0-SNAPSHOT"
+subprojects {
+    apply(plugin = "java")
 
-dependencies {
-    paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
-}
-
-tasks {
-    runServer {
-        minecraftVersion("1.21.11")
+    java {
+        toolchain.languageVersion = JavaLanguageVersion.of(21)
     }
-}
 
-java {
-    toolchain.languageVersion = JavaLanguageVersion.of(21)
-}
-
-tasks {
-    compileJava {
-        options.release = 21
-    }
-    javadoc {
+    tasks.withType<JavaCompile>().configureEach {
         options.encoding = Charsets.UTF_8.name()
+        options.isFork = true
+    }
+
+    tasks.withType<Javadoc>().configureEach {
+        options.encoding = Charsets.UTF_8.name()
+    }
+
+    tasks.withType<ProcessResources>().configureEach {
+        filteringCharset = Charsets.UTF_8.name()
     }
 }

@@ -14,3 +14,8 @@ plugins {
 }
 
 rootProject.name = "ItemModifier"
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+include("paper")
+
