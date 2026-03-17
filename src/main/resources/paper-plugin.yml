@@ -1,0 +1,10 @@
+name: ItemModifier
+version: '1.0.0-SNAPSHOT'
+main: io.canvasmc.itemmodifer.ItemModifier
+api-version: '1.21'
+load: STARTUP
+authors: [ CanvasMC ]
+description: A plugin/mod that adds the `itemmodify` command, which provides a more user-friendly way to modify the data components of items
+website: https://canvasmc.io
+bootstrapper: io.canvasmc.itemmodifer.PaperBootstrap
+folia-supported: true

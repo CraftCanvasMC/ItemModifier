@@ -1,0 +1,69 @@
+package io.canvasmc.itemmodifer.components;
+
+import com.google.gson.JsonElement;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import io.canvasmc.itemmodifer.ComponentType;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.enchantment.Repairable;
+import org.jspecify.annotations.NonNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+public class RepairableComponent extends ComponentType<Repairable> {
+    @Override
+    public Repairable parse(@NonNull final String raw) throws CommandSyntaxException {
+        try {
+            final String fixed = raw.replaceAll(
+                "([\\[,])\\s*([a-z0-9_.-]+:[a-z0-9_./-]+)",
+                "$1\"$2\""
+            );
+            RegistryAccess.Frozen registryAccess = MinecraftServer.getServer().registryAccess();
+            JsonElement json = GSON.fromJson(fixed, JsonElement.class);
+            List<Holder<Item>> holders = new ArrayList<>();
+            for (final JsonElement element : json.getAsJsonArray()) {
+                holders.add(
+                    registryAccess.lookupOrThrow(Registries.ITEM).get(Identifier.parse(element.getAsString())).orElseThrow()
+                );
+            }
+            HolderSet<Item> items = HolderSet.direct(holders);
+            return new Repairable(items);
+        } catch (Throwable thrown) {
+            throw new DynamicCommandExceptionType(
+                obj -> Component.literal(obj.toString())
+            ).create(thrown.getMessage());
+        }
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> suggestions(CommandContext<CommandSourceStack> context, @NonNull SuggestionsBuilder builder) {
+        return listOfSuggestions(
+            context, builder, (newContext, newBuilder) ->
+                SharedSuggestionProvider.suggestResource(MinecraftServer.getServer()
+                    .registryAccess()
+                    .lookupOrThrow(Registries.ITEM)
+                    .keySet(), newBuilder)
+        );
+    }
+
+    @Override
+    public DataComponentType<Repairable> nms() {
+        return DataComponents.REPAIRABLE;
+    }
+}

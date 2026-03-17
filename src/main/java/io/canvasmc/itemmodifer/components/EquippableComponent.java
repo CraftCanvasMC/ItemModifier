@@ -1,0 +1,46 @@
+package io.canvasmc.itemmodifer.components;
+
+import com.google.gson.JsonElement;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.mojang.serialization.JsonOps;
+import io.canvasmc.itemmodifer.ComponentType;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.equipment.Equippable;
+import org.jspecify.annotations.NonNull;
+
+import java.util.concurrent.CompletableFuture;
+
+public class EquippableComponent extends ComponentType<Equippable> {
+    @Override
+    public CompletableFuture<Suggestions> suggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(parseFromEnum(EquipmentSlot.class), builder);
+    }
+
+    @Override
+    public Equippable parse(@NonNull final String raw) throws CommandSyntaxException {
+        try {
+            String full = "{\"slot\":\"" + raw + "\"}";
+            JsonElement json = GSON.fromJson(full, JsonElement.class);
+            return nms().codec().parse(JsonOps.INSTANCE, json)
+                .getOrThrow(msg -> new IllegalArgumentException("Invalid value: " + msg));
+        } catch (Throwable thrown) {
+            throw new DynamicCommandExceptionType(
+                obj -> Component.literal(obj.toString())
+            ).create(thrown.getMessage());
+        }
+    }
+
+    @Override
+    public DataComponentType<Equippable> nms() {
+        return DataComponents.EQUIPPABLE;
+    }
+}

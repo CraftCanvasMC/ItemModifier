@@ -1,0 +1,84 @@
+package io.canvasmc.itemmodifer.components;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import io.canvasmc.itemmodifer.ComponentType;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.component.FireworkExplosion;
+import org.jetbrains.annotations.Contract;
+import org.jspecify.annotations.NonNull;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
+public class FireworkExplosionComponent extends ComponentType<FireworkExplosion> {
+
+    protected static final Map<String, FieldInfo> EXPLOSION_FIELDS = Map.of(
+        "shape", FieldInfo.stringField(parseFromEnum(FireworkExplosion.Shape.class)),
+        "colors", FieldInfo.listField(FieldInfo.intField()),
+        "fade_colors", FieldInfo.listField(FieldInfo.intField()),
+        "has_trail", FieldInfo.bool(),
+        "has_twinkle", FieldInfo.bool()
+    );
+
+    @Contract("_ -> new")
+    protected static @NonNull FireworkExplosion getExplosionFromJson(final @NonNull JsonObject json) {
+        FireworkExplosion.Shape shape = FireworkExplosion.Shape.valueOf(json.get("shape").getAsString().toUpperCase());
+        IntList colors = new IntArrayList();
+        if (json.has("colors")) {
+            for (final JsonElement jE : json.get("colors").getAsJsonArray()) {
+                colors.add(jE.getAsInt());
+            }
+        }
+        IntList fadeColors = new IntArrayList();
+        if (json.has("fade_colors")) {
+            for (final JsonElement jE : json.get("fade_colors").getAsJsonArray()) {
+                fadeColors.add(jE.getAsInt());
+            }
+        }
+        boolean hasTrail = json.has("has_trail") && json.getAsJsonPrimitive("has_trail").getAsBoolean();
+        boolean hasTwinkle = json.has("has_twinkle") && json.getAsJsonPrimitive("has_twinkle").getAsBoolean();
+        return new FireworkExplosion(shape, colors, fadeColors, hasTrail, hasTwinkle);
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> suggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) {
+        return jsonSuggestions(context, builder);
+    }
+
+    @Override
+    public FireworkExplosion parse(@NonNull final String raw) throws CommandSyntaxException {
+        try {
+            String fixed = raw.replaceAll(
+                "([\\[,])\\s*([a-z0-9_.-]+:[a-z0-9_./-]+)",
+                "$1\"$2\""
+            );
+            JsonObject json = GSON.fromJson(fixed, JsonObject.class);
+            return getExplosionFromJson(json);
+        } catch (Throwable thrown) {
+            throw new DynamicCommandExceptionType(
+                obj -> Component.literal(obj.toString())
+            ).create(thrown.getMessage());
+        }
+    }
+
+    @Override
+    public Map<String, FieldInfo> jsonFields() {
+        return EXPLOSION_FIELDS;
+    }
+
+    @Override
+    public DataComponentType<FireworkExplosion> nms() {
+        return DataComponents.FIREWORK_EXPLOSION;
+    }
+}

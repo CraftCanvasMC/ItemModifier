@@ -1,0 +1,70 @@
+package io.canvasmc.itemmodifer.components;
+
+import com.google.gson.JsonObject;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import io.canvasmc.itemmodifer.ComponentType;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.item.equipment.trim.ArmorTrim;
+import org.jspecify.annotations.NonNull;
+
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.concurrent.CompletableFuture;
+
+public class TrimComponent extends ComponentType<ArmorTrim> {
+    @Override
+    public CompletableFuture<Suggestions> suggestions(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) {
+        return jsonSuggestions(context, builder);
+    }
+
+    @Override
+    public Map<String, FieldInfo> jsonFields() {
+        final RegistryAccess.Frozen registryAccess = MinecraftServer.getServer().registryAccess();
+        return Map.of(
+            "material", FieldInfo.identifierField((context) -> registryAccess.lookupOrThrow(Registries.TRIM_MATERIAL).keySet()),
+            "pattern", FieldInfo.identifierField((context) -> registryAccess.lookupOrThrow(Registries.TRIM_PATTERN).keySet())
+        );
+    }
+
+    @Override
+    public ArmorTrim parse(@NonNull final String raw) throws CommandSyntaxException {
+        try {
+            String fixed = raw.replaceAll(
+                "([\\[,{:])\\s*([a-z0-9_.-]+:[a-z0-9_./-]+)(?=[\\s,}\\]])",
+                "$1\"$2\""
+            );
+            final RegistryAccess.Frozen registryAccess = MinecraftServer.getServer().registryAccess();
+            JsonObject json = GSON.fromJson(fixed, JsonObject.class);
+            if (!json.has("pattern")) {
+                throw new NoSuchElementException("Pattern not defined");
+            }
+            if (!json.has("material")) {
+                throw new NoSuchElementException("Material not defined");
+            }
+            return new ArmorTrim(
+                registryAccess.lookupOrThrow(Registries.TRIM_MATERIAL).get(Identifier.parse(json.get("material").getAsString())).orElseThrow(),
+                registryAccess.lookupOrThrow(Registries.TRIM_PATTERN).get(Identifier.parse(json.get("pattern").getAsString())).orElseThrow()
+            );
+        } catch (Throwable thrown) {
+            throw new DynamicCommandExceptionType(
+                obj -> Component.literal(obj.toString())
+            ).create(thrown.getMessage());
+        }
+    }
+
+    @Override
+    public DataComponentType<ArmorTrim> nms() {
+        return DataComponents.TRIM;
+    }
+}
