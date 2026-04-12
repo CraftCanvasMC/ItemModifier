@@ -42,46 +42,51 @@ public class ConsumableComponent extends ComponentType<Consumable> {
                         MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.SOUND_EVENT).keySet()
                 ),
                 "has_consume_particles", FieldInfo.bool(),
-                "on_consume_effects", FieldInfo.taggedObjectListField("type", Map.of(
-                        "minecraft:apply_effects", Map.of(
-                                "type", FieldInfo.stringField("minecraft:apply_effects"),
-                                "effects", FieldInfo.objectListField(Map.of(
-                                        "id", FieldInfo.identifierField(context ->
-                                                MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.MOB_EFFECT).keySet()
-                                        ),
-                                        "amplifier", FieldInfo.intField("0"),
-                                        "duration", FieldInfo.intField("1", "-1"),
-                                        "ambient", FieldInfo.bool(),
-                                        "show_particles", FieldInfo.bool(),
-                                        "show_icon", FieldInfo.bool()
-                                )),
-                                "probability", FieldInfo.floatField("1.0F")
-                        ),
-                        "minecraft:remove_effects", Map.of(
-                                "type", FieldInfo.stringField("minecraft:remove_effects"),
-                                "effects", FieldInfo.dynamicStringField(context -> {
-                                    List<String> out = new ArrayList<>();
-                                    for (Identifier id : MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.MOB_EFFECT).keySet()) {
-                                        out.add(id.toString());
-                                        out.add("#" + id);
-                                    }
-                                    return out;
-                                })
-                        ),
-                        "minecraft:clear_all_effects", Map.of(
-                                "type", FieldInfo.stringField("minecraft:clear_all_effects")
-                        ),
-                        "minecraft:teleport_randomly", Map.of(
-                                "type", FieldInfo.stringField("minecraft:teleport_randomly"),
-                                "diameter", FieldInfo.floatField("16.0F")
-                        ),
-                        "minecraft:play_sound", Map.of(
-                                "type", FieldInfo.stringField("minecraft:play_sound"),
-                                "sound", FieldInfo.identifierField(context ->
-                                        MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.SOUND_EVENT).keySet()
-                                )
+                "on_consume_effects", FieldInfo.taggedObjectListField("type", consumeEffectVariants())
+        );
+    }
+
+    // static helper so multiple components can re-use. should probably move this somewhere else?
+    public static Map<String, Map<String, FieldInfo>> consumeEffectVariants() {
+        return Map.of(
+                "minecraft:apply_effects", Map.of(
+                        "type", FieldInfo.stringField("minecraft:apply_effects"),
+                        "effects", FieldInfo.objectListField(Map.of(
+                                "id", FieldInfo.identifierField(context ->
+                                        MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.MOB_EFFECT).keySet()
+                                ),
+                                "amplifier", FieldInfo.intField("0"),
+                                "duration", FieldInfo.intField("1", "-1"),
+                                "ambient", FieldInfo.bool(),
+                                "show_particles", FieldInfo.bool(),
+                                "show_icon", FieldInfo.bool()
+                        )),
+                        "probability", FieldInfo.floatField("1.0F")
+                ),
+                "minecraft:remove_effects", Map.of(
+                        "type", FieldInfo.stringField("minecraft:remove_effects"),
+                        "effects", FieldInfo.dynamicStringField(context -> {
+                            List<String> out = new ArrayList<>();
+                            for (Identifier id : MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.MOB_EFFECT).keySet()) {
+                                out.add(id.toString());
+                                out.add("#" + id);
+                            }
+                            return out;
+                        })
+                ),
+                "minecraft:clear_all_effects", Map.of(
+                        "type", FieldInfo.stringField("minecraft:clear_all_effects")
+                ),
+                "minecraft:teleport_randomly", Map.of(
+                        "type", FieldInfo.stringField("minecraft:teleport_randomly"),
+                        "diameter", FieldInfo.floatField("16.0F")
+                ),
+                "minecraft:play_sound", Map.of(
+                        "type", FieldInfo.stringField("minecraft:play_sound"),
+                        "sound", FieldInfo.identifierField(context ->
+                                MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.SOUND_EVENT).keySet()
                         )
-                ))
+                )
         );
     }
 
@@ -130,7 +135,7 @@ public class ConsumableComponent extends ComponentType<Consumable> {
         }
     }
 
-    private static ConsumeEffect parseConsumeEffect(JsonObject json) {
+    public static ConsumeEffect parseConsumeEffect(JsonObject json) {
         if (!json.has("type")) {
             throw new IllegalArgumentException("Consume effect is missing required field 'type'");
         }
