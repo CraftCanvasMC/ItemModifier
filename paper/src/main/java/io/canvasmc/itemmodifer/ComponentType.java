@@ -123,7 +123,7 @@ public abstract class ComponentType<T> extends JsonSuggestionProvider {
         register(new DeathProtectionComponent());
         register(new BlocksAttacksComponent());
         register(new PiercingWeaponComponent());
-        // TODO - KINETIC_WEAPON
+        register(new KineticWeaponComponent());
         register(new SwingAnimationComponent());
         register(integerOnlyComponent(DataComponents.DYED_COLOR, DyedItemColor::new, Integer.MIN_VALUE, Integer.MAX_VALUE));
         register(integerOnlyComponent(DataComponents.MAP_COLOR, MapItemColor::new, Integer.MIN_VALUE, Integer.MAX_VALUE));
