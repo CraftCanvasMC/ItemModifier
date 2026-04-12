@@ -95,9 +95,7 @@ public abstract class ComponentType<T> extends JsonSuggestionProvider {
         register(floatComponent(DataComponents.MINIMUM_ATTACK_CHARGE));
         register(eitherHolderComponent(DataComponents.DAMAGE_TYPE, Registries.DAMAGE_TYPE, context));
         register(chatComponentComponent(DataComponents.ITEM_NAME, context));
-        register(identifierComponent(DataComponents.ITEM_MODEL, () -> {
-            return MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.ITEM).keySet().stream();
-        }));
+        register(identifierComponent(DataComponents.ITEM_MODEL, () -> MinecraftServer.getServer().registryAccess().lookupOrThrow(Registries.ITEM).keySet().stream()));
         register(new ItemLoreComponent(context));
         register(enumComponent(DataComponents.RARITY, Rarity.class));
         register(adventureModePredicateComponent(DataComponents.CAN_PLACE_ON, context));
@@ -114,7 +112,7 @@ public abstract class ComponentType<T> extends JsonSuggestionProvider {
         register(new UseRemainderComponent());
         register(new UseCooldownComponent());
         register(new DamageResistantComponent());
-        // TODO - TOOL
+        register(new ToolComponent());
         register(new WeaponComponent());
         register(new AttackRangeComponent());
         register(integerOnlyComponent(DataComponents.ENCHANTABLE, Enchantable::new, 0, Integer.MAX_VALUE));
@@ -123,7 +121,6 @@ public abstract class ComponentType<T> extends JsonSuggestionProvider {
         register(unitComponent(DataComponents.GLIDER));
         register(identifierComponent(DataComponents.TOOLTIP_STYLE, Stream::empty));
         register(new DeathProtectionComponent());
-        // TODO - BLOCKS_ATTACKS
         register(new BlocksAttacksComponent());
         register(new PiercingWeaponComponent());
         // TODO - KINETIC_WEAPON
