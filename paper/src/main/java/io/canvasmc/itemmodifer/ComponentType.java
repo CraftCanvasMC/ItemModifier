@@ -196,8 +196,7 @@ public abstract class ComponentType<T> extends JsonSuggestionProvider {
                 identifier.getPath().equalsIgnoreCase("bucket_entity_data"))
                 continue;
             if (!REGISTRY.containsKey(nms)) {
-                // TODO - enable this after PR done
-                // throw new IllegalStateException("Unregistered component detected! " + identifier);
+                 throw new IllegalStateException("Unregistered component detected! " + identifier);
             }
         }
     }
