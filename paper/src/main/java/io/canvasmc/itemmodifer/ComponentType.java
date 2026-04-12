@@ -123,6 +123,7 @@ public abstract class ComponentType<T> extends JsonSuggestionProvider {
         register(unitComponent(DataComponents.GLIDER));
         register(identifierComponent(DataComponents.TOOLTIP_STYLE, Stream::empty));
         // TODO - DEATH_PROTECTION
+        register(new DeathProtectionComponent());
         // TODO - BLOCKS_ATTACKS
         register(new PiercingWeaponComponent());
         // TODO - KINETIC_WEAPON
